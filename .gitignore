@@ -34,7 +34,6 @@ ENV/
 # Project specific
 output*/
 export_data/
-*.zip
 
 # macOS
 .DS_Store
