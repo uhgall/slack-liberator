@@ -11,49 +11,36 @@ import logging
 import zipfile
 import tempfile
 from pathlib import Path
-from dotenv import load_dotenv
-import asyncio
 from functools import partial
 from types import SimpleNamespace
 from pydantic import BaseModel
 import html
 
-# Try to import logfire, but don't fail if not available
-try:
-    import logfire
-    LOGFIRE_AVAILABLE = True
-except ImportError:
-    LOGFIRE_AVAILABLE = False
+def setup_logging():
+    """Configure logging for the application"""
+    logging.basicConfig(
+        level=logging.INFO,
+        format='%(asctime)s - %(levelname)s - %(message)s',
+        datefmt='%Y-%m-%d %H:%M:%S'
+    )
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Set up default logging
-logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(levelname)s - %(message)s'
-)
-
-def log(level: str, message: str, **kwargs):
-    """Unified logging function that handles both logfire and standard logging"""
-    if LOGFIRE_AVAILABLE and USE_LOGFIRE:
-        # Get the logging method from logfire
-        log_method = getattr(logfire, level)
-        # Use logfire's format with named parameters
-        log_method(message, **kwargs)
-    else:
-        # Format the message with kwargs for standard logging
-        if kwargs:
-            message = message.format(**kwargs)
-        # Get the logging method from standard logging
-        log_method = getattr(logging, level)
-        log_method(message)
-
-# Global flag for using logfire - will be set in main()
-USE_LOGFIRE = False
+def log(level, message, **kwargs):
+    """
+    Utility function for consistent logging
+    
+    Args:
+        level (str): Log level ('debug', 'info', 'warning', 'error', 'critical')
+        message (str): Message template with optional placeholders
+        **kwargs: Values to fill placeholders in message
+    """
+    log_func = getattr(logging, level.lower())
+    if kwargs:
+        message = message.format(**kwargs)
+    log_func(message)
 
 class SlackExportViewer:
     def __init__(self, output_dir: str = "output", zip_path: str = None):
+        setup_logging()  # Initialize logging
         self.output_dir = output_dir
         self.zip_path = zip_path
         self.temp_dir = None
@@ -1546,6 +1533,7 @@ class SlackExportViewer:
             log('info', 'No files were downloaded in channel {channel}', channel=channel)
 
 def main():
+    setup_logging()  # Initialize logging for main execution
     parser = argparse.ArgumentParser(
         description='Generate static website from Slack export data',
         epilog="""
@@ -1573,17 +1561,7 @@ Examples:
                        help='Output directory path (default: output)')
     parser.add_argument('-force-rewrite', action='store_true',
                        help='Force rewrite all files even if they exist')
-    parser.add_argument('-logfire', action='store_true', help='Enable logfire logging')
     args = parser.parse_args()
-    
-    # Set up logfire if requested and available
-    global USE_LOGFIRE
-    if args.logfire:
-        if LOGFIRE_AVAILABLE:
-            logfire.configure(scrubbing=False)
-            USE_LOGFIRE = True
-        else:
-            logging.warning("Logfire requested but not available. Install with: pip install logfire")
     
     # Validate zip file exists
     if not os.path.exists(args.zip_file):
@@ -1672,4 +1650,5 @@ Examples:
         path=args.output)
 
 if __name__ == '__main__':
+    setup_logging()  # Initialize logging for main execution
     main() 

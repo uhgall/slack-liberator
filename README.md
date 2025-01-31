@@ -34,14 +34,13 @@ Once the export is complete, download the ZIP file to your local machine.
    ```bash
    pip install -r requirements.txt
    ```
-   - This also includes optional dependencies like [python-dotenv] to automatically load environment variables.  
    
 ## Usage
 
 Run the script with the ZIP file of your Slack export:
 
 ```bash
-python slack_export_viewer.py path/to/slack_export.zip
+python slack_export_viewer.py sample.zip
 ```
 
 This command will extract and process the Slack export, downloading any referenced Slack-hosted files. The output directory will be named "output" by default, containing:
